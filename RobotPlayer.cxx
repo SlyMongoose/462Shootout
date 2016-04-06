@@ -540,7 +540,10 @@ bool		RobotPlayer::isMyTeamFlag(float dt)
  */
 void			RobotPlayer::dropFlag(float dt)
 {
-	serverLink->sendDropFlag(getId(), getPosition());
+	TeamColor myTeam = getTeam();
+	float[3] dropPosition;
+	findHomeBase(myTeam, dropPosition);
+	serverLink->sendDropFlag(getId(), dropPosition);
 #ifdef TRACE5
 	char buffer[128];
 	sprintf (buffer, "R%d-%d following A* path", getTeam(), getId());
