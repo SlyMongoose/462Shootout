@@ -37,6 +37,9 @@
 #include "dectree.h" // needed for decision trees
 
 std::vector<BzfRegion*>* RobotPlayer::obstacleList = NULL;
+std::vector< std::vector< AStarNode > > RobotPlayer::teamPaths;
+AStarNode RobotPlayer::teamPathGoalNode = AStarNode();
+int RobotPlayer::teamPathIndex = -1;
 
 const float RobotPlayer::CohesionW = 1.0f;
 const float RobotPlayer::SeparationW = 2.0f;
@@ -140,16 +143,16 @@ void RobotPlayer::getProjectedPosition(const Player *targ, float *projpos) const
  */
 void			RobotPlayer::doUpdate(float dt)
 {
-	LocalPlayer::doUpdate(dt);
+  LocalPlayer::doUpdate(dt);
 
   float tankRadius = BZDBCache::tankRadius;
   const float shotRange  = BZDB.eval(StateDatabase::BZDB_SHOTRANGE);
   const float shotRadius = BZDB.eval(StateDatabase::BZDB_SHOTRADIUS);
 
   // fire shot if any available
-	timerForShot  -= dt;
-	if (timerForShot < 0.0f)
-		timerForShot = 0.0f;
+  timerForShot  -= dt;
+  if (timerForShot < 0.0f)
+    timerForShot = 0.0f;
 
 	// Find the shooting decision
 	aicore::DecisionTreeNode *node = aicore::DecisionTrees::doUpdateShootingDecisions[0].makeDecision(this, dt);
@@ -175,44 +178,44 @@ bool		RobotPlayer::amAlive(float dt)
 bool		RobotPlayer::shotComing(float dt)
 {
     // record previous position
-	const float oldAzimuth = getAngle();
-	const float* oldPosition = getPosition();
-	float position[3];
-	position[0] = oldPosition[0];
-	position[1] = oldPosition[1];
-	position[2] = oldPosition[2];
-	float azimuth = oldAzimuth;
+    const float oldAzimuth = getAngle();
+    const float* oldPosition = getPosition();
+    float position[3];
+    position[0] = oldPosition[0];
+    position[1] = oldPosition[1];
+    position[2] = oldPosition[2];
+    float azimuth = oldAzimuth;
 
-	// basically a clone of Roger's evasive code
-	for (int t=0; t <= World::getWorld()->getCurMaxPlayers(); t++)
-	{
-		Player *p = 0;
-		if (t < World::getWorld()->getCurMaxPlayers())
-			p = World::getWorld()->getPlayer(t);
-		else
-			p = LocalPlayer::getMyTank();
-		if (!p || p->getId() == getId())
-			continue;
-		const int maxShots = p->getMaxShots();
-		for (int s = 0; s < maxShots; s++) {
-			ShotPath* shot = p->getShot(s);
-			if (!shot || shot->isExpired())
-				continue;
-			// ignore invisible bullets completely for now (even when visible)
-			if (shot->getFlag() == Flags::InvisibleBullet)
-				continue;
+    // basically a clone of Roger's evasive code
+    for (int t=0; t <= World::getWorld()->getCurMaxPlayers(); t++)
+    {
+      Player *p = 0;
+      if (t < World::getWorld()->getCurMaxPlayers())
+	p = World::getWorld()->getPlayer(t);
+      else
+	p = LocalPlayer::getMyTank();
+      if (!p || p->getId() == getId())
+	continue;
+      const int maxShots = p->getMaxShots();
+      for (int s = 0; s < maxShots; s++) {
+	ShotPath* shot = p->getShot(s);
+	if (!shot || shot->isExpired())
+	  continue;
+	// ignore invisible bullets completely for now (even when visible)
+	if (shot->getFlag() == Flags::InvisibleBullet)
+	  continue;
 
-			const float* shotPos = shot->getPosition();
-			if ((fabs(shotPos[2] - position[2]) > BZDBCache::tankHeight) && (shot->getFlag() != Flags::GuidedMissile))
-				continue;
-			const float dist = TargetingUtils::getTargetDistance(position, shotPos);
-			if (dist < 150.0f) {
-				const float *shotVel = shot->getVelocity();
+	const float* shotPos = shot->getPosition();
+	if ((fabs(shotPos[2] - position[2]) > BZDBCache::tankHeight) && (shot->getFlag() != Flags::GuidedMissile))
+	  continue;
+	const float dist = TargetingUtils::getTargetDistance(position, shotPos);
+	if (dist < 150.0f) {
+	  const float *shotVel = shot->getVelocity();
 				shotAngle = atan2f(shotVel[1], shotVel[0]);
-				float shotUnitVec[2] = {cosf(shotAngle), sinf(shotAngle)};
+	  float shotUnitVec[2] = {cosf(shotAngle), sinf(shotAngle)};
 
-				float trueVec[2] = {(position[0]-shotPos[0])/dist,(position[1]-shotPos[1])/dist};
-				float dotProd = trueVec[0]*shotUnitVec[0]+trueVec[1]*shotUnitVec[1];
+	  float trueVec[2] = {(position[0]-shotPos[0])/dist,(position[1]-shotPos[1])/dist};
+	  float dotProd = trueVec[0]*shotUnitVec[0]+trueVec[1]*shotUnitVec[1];
 
 				if (dotProd > 0.97f)
 					return true;
@@ -240,21 +243,21 @@ void			RobotPlayer::doNothing(float dt)
 void			RobotPlayer::evade(float dt)
 {
 	float azimuth = getAngle();
-	float rotation;
-	float rotation1 = (float)((shotAngle + M_PI/2.0) - azimuth);
-	if (rotation1 < -1.0f * M_PI) rotation1 += (float)(2.0 * M_PI);
-	if (rotation1 > 1.0f * M_PI) rotation1 -= (float)(2.0 * M_PI);
+	    float rotation;
+	    float rotation1 = (float)((shotAngle + M_PI/2.0) - azimuth);
+	    if (rotation1 < -1.0f * M_PI) rotation1 += (float)(2.0 * M_PI);
+	    if (rotation1 > 1.0f * M_PI) rotation1 -= (float)(2.0 * M_PI);
 
-	float rotation2 = (float)((shotAngle - M_PI/2.0) - azimuth);
-	if (rotation2 < -1.0f * M_PI) rotation2 += (float)(2.0 * M_PI);
-	if (rotation2 > 1.0f * M_PI) rotation2 -= (float)(2.0 * M_PI);
+	    float rotation2 = (float)((shotAngle - M_PI/2.0) - azimuth);
+	    if (rotation2 < -1.0f * M_PI) rotation2 += (float)(2.0 * M_PI);
+	    if (rotation2 > 1.0f * M_PI) rotation2 -= (float)(2.0 * M_PI);
 
-	if (fabs(rotation1) < fabs(rotation2))
-		rotation = rotation1;
-	else
-		rotation = rotation2;
-	setDesiredSpeed(1.0f);
-	setDesiredAngVel(rotation);
+	    if (fabs(rotation1) < fabs(rotation2))
+	      rotation = rotation1;
+	    else
+	      rotation = rotation2;
+	    setDesiredSpeed(1.0f);
+	    setDesiredAngVel(rotation);
 #ifdef TRACE3
 	char buffer[128];
 	sprintf (buffer, "R%d-%d evading", getTeam(), getId());
@@ -277,25 +280,34 @@ void			RobotPlayer::followPath(float dt)
 	float azimuth = oldAzimuth;
     float tankAngVel = BZDB.eval(StateDatabase::BZDB_TANKANGVEL);
     float tankSpeed = BZDBCache::tankSpeed;
-	
+
 	TeamColor myteam = getTeam();
 #ifdef TRACE2
 	char buffer[128];
-	sprintf (buffer, "Robot(%d)'s pathIndex=%d, paths[0].size()=%d",
-		getId(), pathIndex, (int)paths[0].size());
+	sprintf (buffer, "Robot(%d)'s teamPathIndex=%d, teamPaths[0].size()=%d",
+		getId(), teamPathIndex, (int)teamPaths[0].size());
 	controlPanel->addMessage(buffer);
 #endif
-    if (dt > 0.0  && pathIndex >= 0) {
-		float distance;
+    if (dt > 0.0  && teamPathIndex >= 0) {
+      float distance;
       float v[2];
       float endPoint[3];
-	  endPoint[0] = paths[0][pathIndex].getScaledX();
-	  endPoint[1] = paths[0][pathIndex].getScaledY();
+	  AStarNode currentNode = AStarNode(position);
+	  endPoint[0] = teamPaths[0][teamPathIndex].getScaledX();
+	  endPoint[1] = teamPaths[0][teamPathIndex].getScaledY();
+	  if(!clearLineOfSight(currentNode, teamPaths[0][teamPathIndex])) {
+		  aStarSearch(position, endPoint, paths);
+		  pathIndex = paths[0].size()-2;
+	  }
+	  if(pathIndex > 0) {
+		  endPoint[0] = paths[0][pathIndex].getScaledX();
+		  endPoint[1] = paths[0][pathIndex].getScaledY();
+	  }
 #ifdef TRACE2
-			char buffer[128];
-			sprintf (buffer, "Robot(%d) at (%f, %f) heading toward (%f, %f)",
+	  char buffer[128];
+	  sprintf (buffer, "Robot(%d) at (%f, %f) heading toward (%f, %f)",
 		  getId(),position[0], position[1], endPoint[0], endPoint[1]);
-			controlPanel->addMessage(buffer);
+	  controlPanel->addMessage(buffer);
 #endif
       // find how long it will take to get to next path segment
 	  float path[3];
@@ -304,9 +316,12 @@ void			RobotPlayer::followPath(float dt)
       distance = hypotf(path[0], path[1]);
       float tankRadius = BZDBCache::tankRadius;
 	  // find how long it will take to get to next path segment
-	  if (distance <= dt * tankSpeed + BZDBCache::tankRadius)
-		  pathIndex--;
-
+	  if (distance <= dt * tankSpeed + BZDBCache::tankRadius) {
+		  if(pathIndex >= 0)
+			  pathIndex--;
+		  else
+			  teamPathIndex--;
+	  }
 	  float cohesion[3];
 	  float cohesionV[2], separationV[3];
 	  int numCohesionNeighbors = computeCenterOfMass(BZDBCache::worldSize, cohesion);
@@ -332,54 +347,53 @@ void			RobotPlayer::followPath(float dt)
 	  v[0] = CohesionW * cohesionV[0] + SeparationW * separationV[0] + AlignW * align[0] + PathW * path[0];
 	  v[1] = CohesionW * cohesionV[1] + SeparationW * separationV[1] + AlignW * align[1] + PathW * path[1];
 	  float weightSum = CohesionW + SeparationW + AlignW + PathW;
-		v[0] /= weightSum;
-		v[1] /= weightSum;
+	  v[0] /= weightSum;
+	  v[1] /= weightSum;
 
-		float segmentAzimuth = atan2f(v[1], v[0]);
-		float azimuthDiff = segmentAzimuth - azimuth;
-		if (azimuthDiff > M_PI) azimuthDiff -= (float)(2.0 * M_PI);
-		else if (azimuthDiff < -M_PI) azimuthDiff += (float)(2.0 * M_PI);
-		if (fabs(azimuthDiff) > 0.01f) {
-			// drive backward when target is behind, try to stick to last direction
-			if (drivingForward)
-				drivingForward = fabs(azimuthDiff) < M_PI/2*0.9 ? true : false;
-			else
-				drivingForward = fabs(azimuthDiff) < M_PI/2*0.3 ? true : false;
-			float speed = drivingForward ? 1.0f : -1.0f;
+	  float segmentAzimuth = atan2f(v[1], v[0]);
+	  float azimuthDiff = segmentAzimuth - azimuth;
+	  if (azimuthDiff > M_PI) azimuthDiff -= (float)(2.0 * M_PI);
+	  else if (azimuthDiff < -M_PI) azimuthDiff += (float)(2.0 * M_PI);
+	  if (fabs(azimuthDiff) > 0.01f) {
+		  // drive backward when target is behind, try to stick to last direction
+		  if (drivingForward)
+			  drivingForward = fabs(azimuthDiff) < M_PI/2*0.9 ? true : false;
+		  else
+			  drivingForward = fabs(azimuthDiff) < M_PI/2*0.3 ? true : false;
+		  float speed = drivingForward ? 1.0f : -1.0f;
 		  //if (distance <= dt * tankSpeed) {
 			 // // set desired speed
 			 // setDesiredSpeed(speed * distance / dt / tankSpeed);
 		  //} else {
 			 // setDesiredSpeed(speed);
 		  //}
-			setDesiredSpeed(drivingForward ? 1.0f : -1.0f);
-			// set desired turn speed
-			if (azimuthDiff >= dt * tankAngVel) {
-				setDesiredAngVel(1.0f);
-			} else if (azimuthDiff <= -dt * tankAngVel) {
-				setDesiredAngVel(-1.0f);
-			} else {
-				setDesiredAngVel(azimuthDiff / dt / tankAngVel);
-			}
-		} else { // fabs(azimuthDiff) <= 0.01
-			drivingForward = true;
-			// tank doesn't turn while moving forward
-			setDesiredAngVel(0.0f);
+		  setDesiredSpeed(drivingForward ? 1.0f : -1.0f);
+		  // set desired turn speed
+		  if (azimuthDiff >= dt * tankAngVel) {
+			  setDesiredAngVel(1.0f);
+		  } else if (azimuthDiff <= -dt * tankAngVel) {
+			  setDesiredAngVel(-1.0f);
+		  } else {
+			  setDesiredAngVel(azimuthDiff / dt / tankAngVel);
+		  }
+	  } else { // fabs(azimuthDiff) <= 0.01
+		  drivingForward = true;
+		  // tank doesn't turn while moving forward
+		  setDesiredAngVel(0.0f);
 		  //if (distance <= dt * tankSpeed) {
 			 // // set desired speed
 			 // setDesiredSpeed(distance / dt / tankSpeed);
 		  //} else {
 			 // setDesiredSpeed(1.0f);
 		  //}
-		}
+	  }
 #ifdef TRACE3
-		sprintf (buffer, "bot(%d) at (%f, %f) -> (%f, %f), d = %f, dt = %f, v = (%f, %f)",
-			getId(),position[0], position[1], endPoint[0], endPoint[1], distance, dt*tankSpeed, v[0], v[1]);
-		controlPanel->addMessage(buffer);
+	  sprintf (buffer, "bot(%d) at (%f, %f) -> (%f, %f), d = %f, dt = %f, v = (%f, %f)",
+		  getId(),position[0], position[1], endPoint[0], endPoint[1], distance, dt*tankSpeed, v[0], v[1]);
+	  controlPanel->addMessage(buffer);
 #endif
 	}
 }
-
 /*
  * is firingStatus == Ready?
  */
@@ -540,10 +554,7 @@ bool		RobotPlayer::isMyTeamFlag(float dt)
  */
 void			RobotPlayer::dropFlag(float dt)
 {
-	TeamColor myTeam = getTeam();
-	float[3] dropPosition;
-	findHomeBase(myTeam, dropPosition);
-	serverLink->sendDropFlag(getId(), dropPosition);
+	serverLink->sendDropFlag(getId(), getPosition());
 #ifdef TRACE5
 	char buffer[128];
 	sprintf (buffer, "R%d-%d following A* path", getTeam(), getId());
@@ -565,6 +576,7 @@ void			RobotPlayer::explodeTank()
   target = NULL;
   path.clear();
   paths.clear();
+  pathIndex = -1;
 }
 
 void			RobotPlayer::restart(const float* pos, float _azimuth)
@@ -575,6 +587,7 @@ void			RobotPlayer::restart(const float* pos, float _azimuth)
   paths.clear();
   target = NULL;
   pathIndex = -1;
+
 }
 
 float			RobotPlayer::getTargetPriority(const
@@ -633,23 +646,23 @@ void			RobotPlayer::setTarget(const Player* _target)
 	  findOpponentFlag(goalPos);
 
   AStarNode goalNode(goalPos);
-  if (!paths.empty() && goalNode == pathGoalNode)
+  if (!teamPaths.empty() && goalNode == teamPathGoalNode)
 	  return; // same goal so no need to plan again
   
-  aStarSearch(getPosition(), goalPos, paths);
-  if (!paths.empty()) {
-	  pathGoalNode.setX(paths[0][0].getX());
-	  pathGoalNode.setY(paths[0][0].getY());
-	  pathIndex = paths[0].size()-2; // last index is start node
+  aStarSearch(getPosition(), goalPos, teamPaths);
+  if (!teamPaths.empty()) {
+	  teamPathGoalNode.setX(teamPaths[0][0].getX());
+	  teamPathGoalNode.setY(teamPaths[0][0].getY());
+	  teamPathIndex = teamPaths[0].size()-2; // last index is start node
   }
 #ifdef TRACE2
   char buffer[128];
-  sprintf (buffer, "\nNumber of paths: %d\nPath coordinates: \n[ ", paths.size());
+  sprintf (buffer, "\nNumber of paths: %d\nPath coordinates: \n[ ", teamPaths.size());
   controlPanel->addMessage(buffer);
-  for (int a=0; a<paths[0].size(); a++) {
-	  sprintf(buffer, "[%d, %d]; ", paths[0][a].getX(), paths[0][a].getY());
+  for (int a=0; a<teamPaths[0].size(); a++) {
+	  sprintf(buffer, "[%d, %d]; ", teamPaths[0][a].getX(), teamPaths[0][a].getY());
 	  controlPanel->addMessage(buffer);
-	  }
+  }
   controlPanel->addMessage(" ]\n\n");
 #endif
 
@@ -667,9 +680,9 @@ void			RobotPlayer::setTarget(const Player* _target)
 		  (int)headRegion, (int)tailRegion);
 	  controlPanel->addMessage(buffer);
 #endif
-	  return;
+    return;
   }
-  
+
   mailbox++;
   headRegion->setPathStuff(0.0f, NULL, q1, mailbox);
   RegionPriorityQueue queue;
@@ -1127,6 +1140,34 @@ void		RobotPlayer::aStarSearch(const float startPos[3], const float goalPos[3],
 	  }
 	  controlPanel->addMessage(" ]\n\n");
 #endif
+}
+
+/*
+ * Is there a clear line-of-sight from AStarNode start to AStarNode goal?
+ */
+bool		RobotPlayer::clearLineOfSight(const AStarNode start, const AStarNode goal)
+{
+	float pos[3], dir[3];
+	pos[0] = start.getScaledX();
+	pos[1] = start.getScaledY();
+	pos[2] = BZDBCache::tankHeight/2;
+	dir[0] = goal.getScaledX() - pos[0];
+	dir[1] = goal.getScaledY() - pos[1];
+	dir[2] = 0.0f;
+	float distance = hypotf(dir[0], dir[1]);
+	dir[0] /= distance;
+	dir[1] /= distance;
+	Ray tankRay(pos, dir);
+	const Obstacle* obstacle = ShotStrategy::getFirstBuilding(tankRay, 0.0f, distance);
+#ifdef TRACE4
+	if (trace && obstacle) {
+			char buffer[128];
+			sprintf (buffer, "R%d-%d: no line-of-sight from (%d, %d) to (%d, %d)",
+				getTeam(), getId(), start.getX(), start.getY(), goal.getX(), goal.getY());
+			controlPanel->addMessage(buffer);
+	}
+#endif
+	return obstacle == NULL;
 }
 
 // Local Variables: ***

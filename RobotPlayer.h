@@ -98,17 +98,19 @@ class RobotPlayer : public LocalPlayer {
 	 static const float		SeparationW;
 	 static const float		AlignW;
 	 static const float		PathW;
-
+	 
   private:
     const Player*	target;
     std::vector<RegionPoint>	path;
     int		pathIndex;
-	int		teamPathIndex;
+	static int		teamPathIndex;
     float		timerForShot;
     bool		drivingForward;
     static std::vector<BzfRegion*>* obstacleList;
 	std::vector< std::vector< AStarNode > > paths; // planner result paths
+	static std::vector< std::vector< AStarNode > > teamPaths; // planner result paths
 	AStarNode pathGoalNode; // goal position for current planner result
+	static AStarNode teamPathGoalNode; // goal position for current planner result
 	float shotAngle; // azimuth of incoming shot
 	float targetdistance; // distance to target
 	float targetdir[3]; // direction to target
