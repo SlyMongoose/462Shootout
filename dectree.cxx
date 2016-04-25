@@ -127,7 +127,6 @@ namespace aicore
 		doUpdateDropFlagDecisions[2].falseBranch = &doUpdateDropFlagDecisions[3];
 		
 		//if a shot is coming throw flag
-		
 		doUpdateDropFlagDecisions[3].decFuncPtr = &RobotPlayer::shotComing;
 		doUpdateDropFlagDecisions[3].trueBranch = &doUpdateDropFlagDecisions[1];
 		doUpdateDropFlagDecisions[3].falseBranch = &doUpdateDropFlagDecisions[4];

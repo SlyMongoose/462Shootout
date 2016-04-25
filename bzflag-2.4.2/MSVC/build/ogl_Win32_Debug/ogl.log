@@ -1,8 +1,0 @@
-﻿  OpenGLGState.cxx
-  OpenGLLight.cxx
-  OpenGLMaterial.cxx
-  OpenGLTexture.cxx
-  OpenGLUtils.cxx
-  RenderNode.cxx
-  Generating Code...
-  ogl.vcxproj -> C:\Users\SlyMongoose\Desktop\bzflag-2.4.2\MSVC\build\./ogl_Win32_Debug\ogl.lib
