@@ -536,6 +536,40 @@ bool		RobotPlayer::isMyTeamFlag(float dt)
 	//return (myFlag->flagTeam == 1);
 	return (myFlag->flagTeam == getTeam());
 }
+
+
+/* Check if we have a bad flag */
+bool		RobotPlayer::isFlagBad(float dt)
+{
+
+	FlagType* thisFlag = getFlag();
+	return (thisFlag->endurance == FlagBad);
+}
+
+/* Throw flag if it's a bad one*/
+void		RobotPlayer::throwBadFlag(float dt)
+{
+	float tossFlagHere[3] = { 0, -60, 0 };
+	TeamColor myteam = getTeam();
+	if (!AStarNode::isAccessible(0, -60))
+	{
+		if (AStarNode::isAccessible(0, 60))
+		{
+			tossFlagHere[0] = 0;
+			tossFlagHere[1] = 60;
+		}
+		else
+		{
+			tossFlagHere[0] = 0;
+			tossFlagHere[1] = 0;
+		}
+	}
+
+	serverLink->sendDropFlag(getId(), tossFlagHere);	
+
+}
+
+
 /*
  * Drop the flag that the robot tank is carrying
  */
@@ -571,8 +605,60 @@ void			RobotPlayer::dropFlag(float dt)
 #endif
 }
 
+/* If we find an enemy carrying our flag, have them kindly return it to us, because we are all friends*/
+void		RobotPlayer::gimmeMyFlag()
+{
+	//set our team color
+	TeamColor myTeam = getTeam();
+
+	//go through all the robots
+	for (int i = 0; i <= World::getWorld()->getCurMaxPlayers(); i++)
+	{
+		Player *p = 0;
+		if (i < World::getWorld()->getCurMaxPlayers())
+		{
+			p = World::getWorld()->getPlayer(i);
+		}
+		else
+		{
+			p = LocalPlayer::getMyTank();
+		}
+
+		//confirm that the robot we are assessing is not on our team
+		if (p && (p->getTeam() != myTeam))
+		{
+			FlagType* enemyHasFlag = p->getFlag();
+			//see if they have a flag, and if they do, check if it is our flag
+			if ((enemyHasFlag != Flags::Null) && enemyHasFlag->flagTeam == myTeam)
+			{
+				float putHere[3] = { -735,0,0 };
+				if (!AStarNode::isAccessible(-735, 0))
+				{
+					if (AStarNode::isAccessible(-735, 40))
+					{
+						putHere[0] = -735;
+						putHere[1] = 40;
+					}
+					else if (AStarNode::isAccessible(-735, -40))
+					{
+						putHere[0] = -735;
+						putHere[1] = -40;
+					}
+				}
+
+				serverLink->sendDropFlag(p->getId(), putHere);
+			}
+		}
+		else
+		{
+			return;
+		}
+	}
+}
+
 void				RobotPlayer::doUpdateMotion(float dt)
 {
+	gimmeMyFlag();
 	// Find the update motion decision
 	aicore::DecisionPtr::runDecisionTree(aicore::DecisionTrees::doUpdateMotionDecisions, this, dt);
 	LocalPlayer::doUpdateMotion(dt);
