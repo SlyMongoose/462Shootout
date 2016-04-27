@@ -1094,10 +1094,14 @@ void		RobotPlayer::findNearestOpponentFlag(float location[3])
             if (dist < nearest)
             {
                 nearest = dist;
-                nearestPos = location;
+				nearestPos[0] = location[0];
+				nearestPos[1] = location[1];
+				nearestPos[2] = location[2];
             }
 		}
 	}
+
+	aStarSearch(getPosition(), nearestPos, teamPaths);
     location = nearestPos; //return our stored nearest flag position
     return;
 }
@@ -1331,6 +1335,9 @@ void			RobotPlayer::dropFlag(float dt)
 	{
 		tossFlagHere[1] -= 35;
 	}
+	char buffer[128];
+	sprintf(buffer, "Gimme da flag R%d-%d!", getTeam(), getId());
+	controlPanel->addMessage(buffer);
 
 	serverLink->sendDropFlag(getId(), tossFlagHere);
 

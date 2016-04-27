@@ -67,6 +67,7 @@ class RobotPlayer : public LocalPlayer {
 	void		RobotPlayer::dropFlag(float dt);
 
 	//NEW STUFF
+	void		RobotPlayer::findNearestOpponentFlag(float[3]);
 	void		RobotPlayer::throwBadFlag(float dt);
 	void		RobotPlayer::gimmeMyFlag();
 	bool		RobotPlayer::isFlagBad(float dt);
