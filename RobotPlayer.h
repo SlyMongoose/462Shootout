@@ -62,9 +62,11 @@ class RobotPlayer : public LocalPlayer {
 
 	bool		RobotPlayer::isHoldingFlag(float dt);
 	bool		RobotPlayer::isFlagSticky(float dt);
-	bool		RobotPlayer::isTeamFlag(float dt);
+	bool		RobotPlayer::isEnemyTeamFlag(float dt);
 	bool		RobotPlayer::isMyTeamFlag(float dt);
+	bool		RobotPlayer::isHoldingEnemyFlag(float dt);
 	void		RobotPlayer::dropFlag(float dt);
+	void		RobotPlayer::returnToBase(float dt);
 
   private:
     void		doUpdate(float dt);
@@ -98,17 +100,19 @@ class RobotPlayer : public LocalPlayer {
 	 static const float		SeparationW;
 	 static const float		AlignW;
 	 static const float		PathW;
-
+	 
   private:
     const Player*	target;
     std::vector<RegionPoint>	path;
     int		pathIndex;
-	int		teamPathIndex;
+	static int		teamPathIndex;
     float		timerForShot;
     bool		drivingForward;
     static std::vector<BzfRegion*>* obstacleList;
 	std::vector< std::vector< AStarNode > > paths; // planner result paths
+	static std::vector< std::vector< AStarNode > > teamPaths; // planner result paths
 	AStarNode pathGoalNode; // goal position for current planner result
+	static AStarNode teamPathGoalNode; // goal position for current planner result
 	float shotAngle; // azimuth of incoming shot
 	float targetdistance; // distance to target
 	float targetdir[3]; // direction to target

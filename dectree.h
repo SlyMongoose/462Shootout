@@ -119,12 +119,12 @@ namespace aicore
 		static void init();
 		// Holds our list of decisions
 		static DecisionPtr doUpdateMotionDecisions[2];
-		static DecisionPtr doUpdateShootingDecisions[6];
+		static DecisionPtr doUpdateShootingDecisions[7];
 		static DecisionPtr doUpdateDropFlagDecisions[5];
 		// Holds our list of actions
 		static ActionPtr doUpdateMotionActions[3];
 		static ActionPtr doUpdateShootingActions[3];
-		static ActionPtr doUpdateDropFlagActions[2];
+		static ActionPtr doUpdateDropFlagActions[3];
 	};
 
 }; // end of namespace
