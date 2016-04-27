@@ -1,0 +1,29 @@
+﻿  ArcObstacle.cxx
+  BaseBuilding.cxx
+  BoxBuilding.cxx
+  ConeObstacle.cxx
+  MeshDrawInfo.cxx
+  MeshFace.cxx
+  MeshObstacle.cxx
+  Obstacle.cxx
+  ObstacleList.cxx
+  ObstacleMgr.cxx
+  ObstacleModifier.cxx
+  PyramidBuilding.cxx
+  SphereObstacle.cxx
+  Teleporter.cxx
+  TetraBuilding.cxx
+  Triangulate.cxx
+  WallObstacle.cxx
+  BaseSceneNodeGenerator.cxx
+  BoxSceneNodeGenerator.cxx
+  EmptySceneNodeGenerator.cxx
+  Generating Code...
+  Compiling...
+  MeshSceneNodeGenerator.cxx
+  ObstacleSceneNodeGenerator.cxx
+  PyramidSceneNodeGenerator.cxx
+  TeleporterSceneNodeGenerator.cxx
+  WallSceneNodeGenerator.cxx
+  Generating Code...
+  obstacle.vcxproj -> C:\Users\SlyMongoose\Desktop\bzflag-2.4.2\MSVC\build\./obstacle_Win32_Debug\obstacle.lib

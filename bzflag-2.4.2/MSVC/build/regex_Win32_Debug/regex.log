@@ -1,0 +1,6 @@
+﻿  regfree.c
+  regexec.c
+  regerror.c
+  regcomp.c
+  Generating Code...
+  regex.vcxproj -> C:\Users\SlyMongoose\Desktop\bzflag-2.4.2\MSVC\build\./regex_Win32_Debug\regex.lib

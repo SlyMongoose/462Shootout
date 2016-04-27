@@ -1,0 +1,45 @@
+﻿  AccessList.cxx
+  AutoCompleter.cxx
+  Bundle.cxx
+  BundleMgr.cxx
+  bz_Locale.cxx
+  BZDBCache.cxx
+  bzfio.cxx
+  bzglob.cxx
+  BzPNG.cxx
+  CommandManager.cxx
+  ConfigFileManager.cxx
+  Country.cxx
+  cURLManager.cxx
+  ErrorHandler.cxx
+  FileManager.cxx
+  Flag.cxx
+  GameTime.cxx
+  global.cxx
+  KeyManager.cxx
+  Language.cxx
+  Generating Code...
+  Compiling...
+  md5.cxx
+  messages.cxx
+  OSFile.cxx
+  ParseColor.cxx
+  PlayerState.cxx
+  PositionTracker.cxx
+c:\users\slymongoose\desktop\bzflag-2.4.2\src\common\positiontracker.cxx(98): warning C4267: 'return': conversion from 'size_t' to 'unsigned short', possible loss of data
+c:\users\slymongoose\desktop\bzflag-2.4.2\src\common\positiontracker.cxx(135): warning C4267: 'return': conversion from 'size_t' to 'unsigned short', possible loss of data
+c:\users\slymongoose\desktop\bzflag-2.4.2\src\common\positiontracker.cxx(213): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned short', possible loss of data
+c:\users\slymongoose\desktop\bzflag-2.4.2\src\common\positiontracker.cxx(235): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned short', possible loss of data
+c:\users\slymongoose\desktop\bzflag-2.4.2\src\common\positiontracker.cxx(359): warning C4267: 'return': conversion from 'size_t' to 'unsigned short', possible loss of data
+  ShotUpdate.cxx
+  StateDatabase.cxx
+  Team.cxx
+  TextChunkManager.cxx
+  TextUtils.cxx
+  TimeBomb.cxx
+  TimeKeeper.cxx
+  VotingBooth.cxx
+  WordFilter.cxx
+  Generating Code...
+  bzsignal.c
+  common.vcxproj -> C:\Users\SlyMongoose\Desktop\bzflag-2.4.2\MSVC\build\./common_Win32_Debug\common.lib
