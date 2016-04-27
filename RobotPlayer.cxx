@@ -664,7 +664,7 @@ void			RobotPlayer::setTarget(const Player* _target)
   /*if (myTeamHoldingOpponentFlag())
 	  findHomeBase(myteam, goalPos);
   else*/
- findOpponentFlag(goalPos);
+ findNearestOpponentFlag(goalPos);
 
   AStarNode goalNode(goalPos);
   if (!teamPaths.empty() && goalNode == teamPathGoalNode)
@@ -676,6 +676,7 @@ void			RobotPlayer::setTarget(const Player* _target)
 	  teamPathGoalNode.setY(teamPaths[0][0].getY());
 	  teamPathIndex = teamPaths[0].size()-2; // last index is start node
   }
+
 #ifdef TRACE2
   char buffer[128];
   sprintf (buffer, "\nNumber of paths: %d\nPath coordinates: \n[ ", teamPaths.size());
@@ -1074,6 +1075,40 @@ bool		RobotPlayer::myTeamHoldingOpponentFlag(void)
 	controlPanel->addMessage(buffer);
 #endif
 	return false;
+}
+
+void		RobotPlayer::findNearestOpponentFlag(float location[3])
+{
+	TeamColor myTeamColor = getTeam();
+	float nearest = std::numeric_limits<float>::infinity();
+	float nearestPos[3];
+	if (!World::getWorld()->allowTeamFlags()) return;
+	for (int i = 0; i < numFlags; i++) {
+		Flag& flag = World::getWorld()->getFlag(i);
+		TeamColor flagTeamColor = flag.type->flagTeam;
+		if (flagTeamColor != NoTeam && flagTeamColor != myTeamColor) {
+			location[0] = flag.position[0];
+			location[1] = flag.position[1];
+			location[2] = flag.position[2];
+			float dist = hypotf(location[0], location[1]);
+#ifdef TRACE2
+			char buffer[128];
+			sprintf(buffer, "Robot(%d) found a flag at (%f, %f, %f)",
+				getId(), location[0], location[1], location[2]);
+			controlPanel->addMessage(buffer);
+#endif
+			//if current closer than last, update
+			if (dist < nearest)
+			{
+				nearest = dist;
+				nearestPos[0] = location[0];
+				nearestPos[1] = location[1];
+				nearestPos[2] = location[2];
+			}
+		}
+	}
+	location = nearestPos; //return our stored nearest flag position
+	return;
 }
 
 /*

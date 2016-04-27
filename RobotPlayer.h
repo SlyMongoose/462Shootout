@@ -95,6 +95,7 @@ class RobotPlayer : public LocalPlayer {
 	 void		RobotPlayer::aStarSearch(const float startPos[3], const float goalPos[3],
 										 std::vector< std::vector< AStarNode > >& paths);
 	 bool		RobotPlayer::clearLineOfSight(const AStarNode start, const AStarNode goal);
+	 void		RobotPlayer::findNearestOpponentFlag(float location[3]);
 
 	 static const float		CohesionW;
 	 static const float		SeparationW;
