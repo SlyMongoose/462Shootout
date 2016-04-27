@@ -14,11 +14,6 @@
  *
  */
 
-//#define TRACE
-#define TRACE2
-#define TRACE3
-#define TRACE_PLANNER
-
 // interface header
 #include "RobotPlayer.h"
 
@@ -322,6 +317,9 @@ void			RobotPlayer::followPath(float dt)
 		  else
 			  teamPathIndex--;
 	  }
+	  //no flocking
+
+	  /*
 	  float cohesion[3];
 	  float cohesionV[2], separationV[3];
 	  int numCohesionNeighbors = computeCenterOfMass(BZDBCache::worldSize, cohesion);
@@ -349,6 +347,9 @@ void			RobotPlayer::followPath(float dt)
 	  float weightSum = CohesionW + SeparationW + AlignW + PathW;
 	  v[0] /= weightSum;
 	  v[1] /= weightSum;
+	  */
+
+	  v[0] = v[1] = 0;
 
 	  float segmentAzimuth = atan2f(v[1], v[0]);
 	  float azimuthDiff = segmentAzimuth - azimuth;
@@ -1101,7 +1102,6 @@ void		RobotPlayer::findNearestOpponentFlag(float location[3])
 		}
 	}
 
-	aStarSearch(getPosition(), nearestPos, teamPaths);
     location = nearestPos; //return our stored nearest flag position
     return;
 }
