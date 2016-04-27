@@ -1052,12 +1052,14 @@ bool		RobotPlayer::myTeamHoldingOpponentFlag(void)
 }
 
 /*
- * Find any opponent flag and return its location
+ * Find nearest opponent flag and return its location
  */
 
-void		RobotPlayer::findOpponentFlag(float location[3])
+void		RobotPlayer::findNearestOpponentFlag(float location[3])
 {
 	TeamColor myTeamColor = getTeam();
+	float nearest = std::numeric_limits<float>::infinity();
+	float nearestPos[3];
 	if (!World::getWorld()->allowTeamFlags()) return;
 	for (int i = 0; i < numFlags; i++) {
 		Flag& flag = World::getWorld()->getFlag(i);
@@ -1066,15 +1068,23 @@ void		RobotPlayer::findOpponentFlag(float location[3])
 			location[0] = flag.position[0];
 			location[1] = flag.position[1];
 			location[2] = flag.position[2];
+			float dist = hypotf(location[0] - getPosition()[0], location[1] - getPosition()[1]);
 #ifdef TRACE2
 			char buffer[128];
-			sprintf (buffer, "Robot(%d) found a flag at (%f, %f, %f)",
+			sprintf(buffer, "Robot(%d) found a flag at (%f, %f, %f)",
 				getId(), location[0], location[1], location[2]);
 			controlPanel->addMessage(buffer);
 #endif
-			return;
+			//if current closer than last, update
+			if (dist < nearest)
+			{
+				nearest = dist;
+				nearestPos = location;
+			}
 		}
 	}
+	location = nearestPos; //return our stored nearest flag position
+	return;
 }
 
 /*
@@ -1137,6 +1147,8 @@ void		RobotPlayer::aStarSearch(const float startPos[3], const float goalPos[3],
 	  controlPanel->addMessage(" ]\n\n");
 #endif
 }
+
+
 
 // Local Variables: ***
 // mode:C++ ***

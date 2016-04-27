@@ -88,7 +88,7 @@ class RobotPlayer : public LocalPlayer {
 									  float avV[3], float* avAzimuth);
 	 void		RobotPlayer::findHomeBase(TeamColor teamColor, float location[3]);
 	 bool		RobotPlayer::myTeamHoldingOpponentFlag(void);
-	 void		RobotPlayer::findOpponentFlag(float location[3]);
+	 void		RobotPlayer::findNearestOpponentFlag(float location[3]);
 	 Player*		RobotPlayer::lookupLocalPlayer(PlayerId id);
 	 void		RobotPlayer::aStarSearch(const float startPos[3], const float goalPos[3],
 										 std::vector< std::vector< AStarNode > >& paths);
