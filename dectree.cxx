@@ -9,47 +9,72 @@
  * implies agreement with all terms and conditions of the accompanying
  * software licence.
  */
+#include <exception>
 #include "dectree.h"
+#define TRACE_DECTREE
 
 namespace aicore
 {
-
-    DecisionTreeNode* Decision::makeDecision(RobotPlayer* bot, float dt)
-    {
-        // Choose a branch based on the getBranch method
-        if (getBranch(bot, dt)) {
-            // Make sure its not null before recursing.
-            if (trueBranch == NULL) return NULL;
-            else return trueBranch->makeDecision(bot, dt);
-        } else {
-            // Make sure its not null before recursing.
-            if (falseBranch == NULL) return NULL;
-            else return falseBranch->makeDecision(bot, dt);
-        }
-    }
-    
 	DecisionTreeNode* DecisionPtr::makeDecision(RobotPlayer* bot, float dt)
     {
         // Choose a branch based on the getBranch method
         if ( getBranch(bot, dt) ) {
             // Make sure its not null before recursing.
-            if (trueBranch == NULL) return NULL;
+            if (trueBranch == NULL) {
+#ifdef TRACE_DECTREE
+				controlPanel->addMessage("NULL true branch");
+				throw "NULL true branch";
+#endif
+				return NULL;
+			}
             else return trueBranch->makeDecision(bot, dt);
         } else {
             // Make sure its not null before recursing.
-            if (falseBranch == NULL) return NULL;
+            if (falseBranch == NULL) {
+#ifdef TRACE_DECTREE
+				controlPanel->addMessage("NULL false branch");
+				throw "NULL false branch";
+#endif
+				return NULL;
+			}
             else return falseBranch->makeDecision(bot, dt);
         }
     }
 
 	bool DecisionPtr::getBranch(RobotPlayer* bot, float dt)
 	{
+		if (decFuncPtr == NULL) {
+#ifdef TRACE_DECTREE
+			controlPanel->addMessage("NULL decFunctPtr");
+			throw "NULL decFunctPtr";
+#endif
+		}
 		return (bot->*decFuncPtr)(dt);
+	}
+
+	void DecisionPtr::runDecisionTree(DecisionPtr decTree[], RobotPlayer* bot, float dt)
+	{
+		// Find the decision
+		DecisionTreeNode *node = decTree[0].makeDecision(bot, dt);
+		void (RobotPlayer::*actFuncPtr)(float dt) = ((ActionPtr*)node)->actFuncPtr;
+		if (actFuncPtr == NULL) {
+#ifdef TRACE_DECTREE
+			controlPanel->addMessage("NULL action function pointer in decision tree.");
+			throw "NULL action function pointer in decision tree.";
+#endif // TRACE_DECTREE
+		}
+		else {
+			(bot->*actFuncPtr)(dt);
+		}
 	}
 
 	// Set up the trees
 	void DecisionTrees::init()
 	{
+		//we have a variable called choice that will tell us which action we pick
+		//in these decisions, which is subsequently used to determine if other decisions
+		//trees should be run.
+
 		// decision tree for doUpdateMotion
 		doUpdateMotionDecisions[0].decFuncPtr = &RobotPlayer::amAlive;
 		doUpdateMotionDecisions[0].trueBranch = &doUpdateMotionDecisions[1];
@@ -101,27 +126,44 @@ namespace aicore
 		doUpdateDropFlagDecisions[1].trueBranch = &doUpdateDropFlagDecisions[2];
 		doUpdateDropFlagDecisions[1].falseBranch = &doUpdateDropFlagActions[0];
 		
-		doUpdateDropFlagDecisions[2].decFuncPtr = &RobotPlayer::isFlagSticky;
-		doUpdateDropFlagDecisions[2].trueBranch = &doUpdateDropFlagActions[0];
-		doUpdateDropFlagDecisions[2].falseBranch = &doUpdateDropFlagDecisions[3];
+		//if a shot is coming throw flag
+		/*
+		doUpdateDropFlagDecisions[2].decFuncPtr = &RobotPlayer::shotComing;
+		doUpdateDropFlagDecisions[2].trueBranch = &doUpdateDropFlagDecisions[3];
+		doUpdateDropFlagDecisions[2].falseBranch = &doUpdateDropFlagDecisions[4];
+		*/
 		
-		doUpdateDropFlagDecisions[3].decFuncPtr = &RobotPlayer::isTeamFlag;
-		doUpdateDropFlagDecisions[3].trueBranch = &doUpdateDropFlagDecisions[4];
-		doUpdateDropFlagDecisions[3].falseBranch = &doUpdateDropFlagActions[1];
+		doUpdateDropFlagDecisions[2].decFuncPtr = &RobotPlayer::isTeamFlag;
+		doUpdateDropFlagDecisions[2].trueBranch = &doUpdateDropFlagDecisions[3];
+		doUpdateDropFlagDecisions[2].falseBranch = &doUpdateDropFlagDecisions[5];
 		
-		doUpdateDropFlagDecisions[4].decFuncPtr = &RobotPlayer::isMyTeamFlag;
-		doUpdateDropFlagDecisions[4].trueBranch = &doUpdateDropFlagActions[1];
+		doUpdateDropFlagDecisions[3].decFuncPtr = &RobotPlayer::isMyTeamFlag;
+		doUpdateDropFlagDecisions[3].trueBranch = &doUpdateDropFlagActions[1];
+		doUpdateDropFlagDecisions[3].falseBranch = &doUpdateDropFlagDecisions[4];
+
+		doUpdateDropFlagDecisions[4].decFuncPtr = &RobotPlayer::isFlagBad;
+		doUpdateDropFlagDecisions[4].trueBranch = &doUpdateDropFlagActions[2];
 		doUpdateDropFlagDecisions[4].falseBranch = &doUpdateDropFlagActions[0];
+
+		doUpdateDropFlagDecisions[5].decFuncPtr = &RobotPlayer::nearHome;
+		doUpdateDropFlagDecisions[5].trueBranch = &doUpdateDropFlagActions[0];
+		doUpdateDropFlagDecisions[5].falseBranch = &doUpdateDropFlagActions[1];
 
 		doUpdateDropFlagActions[0].actFuncPtr = &RobotPlayer::doNothing;
 		doUpdateDropFlagActions[1].actFuncPtr = &RobotPlayer::dropFlag;
+		doUpdateDropFlagActions[2].actFuncPtr = &RobotPlayer::throwBadFlag;
+		
+		//doUpdateDropFlagActions[3].actFuncPtr = &RobotPlayer::throwFlag;
 	}
 
 	DecisionPtr DecisionTrees::doUpdateMotionDecisions[2];
 	ActionPtr DecisionTrees::doUpdateMotionActions[3];
+	
 	DecisionPtr DecisionTrees::doUpdateShootingDecisions[6];
 	ActionPtr DecisionTrees::doUpdateShootingActions[3];
-	DecisionPtr DecisionTrees::doUpdateDropFlagDecisions[5];
-	ActionPtr DecisionTrees::doUpdateDropFlagActions[2];
+
+
+	DecisionPtr DecisionTrees::doUpdateDropFlagDecisions[6];
+	ActionPtr DecisionTrees::doUpdateDropFlagActions[3];
 
 }; // end of namespace

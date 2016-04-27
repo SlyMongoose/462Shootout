@@ -66,6 +66,14 @@ class RobotPlayer : public LocalPlayer {
 	bool		RobotPlayer::isMyTeamFlag(float dt);
 	void		RobotPlayer::dropFlag(float dt);
 
+	//NEW STUFF
+	void		RobotPlayer::throwBadFlag(float dt);
+	void		RobotPlayer::gimmeMyFlag();
+	bool		RobotPlayer::isFlagBad(float dt);
+	void		RobotPlayer::throwFlag(float dt);
+	bool		RobotPlayer::nearHome(float dt);
+
+
   private:
     void		doUpdate(float dt);
     void		doUpdateMotion(float dt);
@@ -98,7 +106,10 @@ class RobotPlayer : public LocalPlayer {
 	 static const float		SeparationW;
 	 static const float		AlignW;
 	 static const float		PathW;
-	 
+
+
+
+
   private:
     const Player*	target;
     std::vector<RegionPoint>	path;

@@ -52,7 +52,7 @@ namespace aicore
     public:
         /**
          * Makes the decision - in  this case there is no decision, so
-         * this method returns the action back again..
+         * this method returns the action back again.
          */
         virtual DecisionTreeNode* makeDecision(RobotPlayer* bot, float dt)
         {
@@ -81,7 +81,7 @@ namespace aicore
          * recursively walks down the tree until it reaches the final
          * item to return (which is an action).
          */
-        virtual DecisionTreeNode* makeDecision(RobotPlayer* bot, float dt);
+        virtual DecisionTreeNode* makeDecision(RobotPlayer* bot, float dt) = 0;
     };
 
     /**
@@ -98,6 +98,7 @@ namespace aicore
 
         virtual DecisionTreeNode* makeDecision(RobotPlayer* bot, float dt);
 		virtual bool getBranch(RobotPlayer* bot, float dt);
+		static void runDecisionTree(DecisionPtr decTree[], RobotPlayer* bot, float dt);
 	};
 
 	/**
@@ -119,12 +120,16 @@ namespace aicore
 		static void init();
 		// Holds our list of decisions
 		static DecisionPtr doUpdateMotionDecisions[2];
+		
 		static DecisionPtr doUpdateShootingDecisions[6];
-		static DecisionPtr doUpdateDropFlagDecisions[5];
+		
+		static DecisionPtr doUpdateDropFlagDecisions[6];
 		// Holds our list of actions
 		static ActionPtr doUpdateMotionActions[3];
+		
 		static ActionPtr doUpdateShootingActions[3];
-		static ActionPtr doUpdateDropFlagActions[2];
+
+		static ActionPtr doUpdateDropFlagActions[3];
 	};
 
 }; // end of namespace

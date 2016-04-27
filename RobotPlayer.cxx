@@ -549,18 +549,7 @@ bool		RobotPlayer::isMyTeamFlag(float dt)
 	FlagType* myFlag = getFlag();
 	return (myFlag->flagTeam == getTeam());
 }
-/*
- * Drop the flag that the robot tank is carrying
- */
-void			RobotPlayer::dropFlag(float dt)
-{
-	serverLink->sendDropFlag(getId(), getPosition());
-#ifdef TRACE5
-	char buffer[128];
-	sprintf (buffer, "R%d-%d following A* path", getTeam(), getId());
-	controlPanel->addMessage(buffer);
-#endif
-}
+
 
 void				RobotPlayer::doUpdateMotion(float dt)
 {
@@ -1200,6 +1189,207 @@ bool		RobotPlayer::clearLineOfSight(const AStarNode start, const AStarNode goal)
 	}
 #endif
 	return obstacle == NULL;
+}
+
+/* If we find an enemy carrying our flag, have them kindly return it to us, because we are all friends*/
+void		RobotPlayer::gimmeMyFlag()
+{
+	//set our team color
+	TeamColor myTeam = getTeam();
+
+	//go through all the robots
+	for (int i = 0; i <= World::getWorld()->getCurMaxPlayers(); i++)
+	{
+		Player *p = 0;
+		if (i < World::getWorld()->getCurMaxPlayers())
+		{
+			p = World::getWorld()->getPlayer(i);
+		}
+		else
+		{
+			p = LocalPlayer::getMyTank();
+		}
+
+		//confirm that the robot we are assessing is not on our team
+		if (p && (p->getTeam() != myTeam))
+		{
+			FlagType* enemyHasFlag = p->getFlag();
+			//see if they have a flag, and if they do, check if it is our flag
+			if ((enemyHasFlag != Flags::Null) && (enemyHasFlag->flagTeam == RedTeam))
+			{
+				char buffer[128];
+				sprintf(buffer, "Gimme da flag R%d-%d!", p->getTeam(), p->getId());
+				controlPanel->addMessage(buffer);
+
+				TeamColor myTeam = getTeam();
+				//serverLink->sendDropFlag(getId(), getPosition());
+				float tossFlagHere[3];
+				findHomeBase(myTeam, tossFlagHere);
+
+				if (tossFlagHere[0] < 0)
+				{
+					tossFlagHere[0] += 35;
+				}
+				if (tossFlagHere[0] > 0)
+				{
+					tossFlagHere[0] -= 35;
+				}
+				if (tossFlagHere[1] < 0)
+				{
+					tossFlagHere[1] += 35;
+				}
+				if (tossFlagHere[1] > 0)
+				{
+					tossFlagHere[1] -= 35;
+				}
+
+				serverLink->sendDropFlag(p->getId(), tossFlagHere);
+			}
+		}
+		else
+		{
+			return;
+		}
+	}
+}
+
+bool		RobotPlayer::isFlagBad(float dt)
+{
+
+	FlagType* thisFlag = getFlag();
+	return (thisFlag->endurance == FlagBad);
+}
+
+/* Throw flag if it's a bad one*/
+void		RobotPlayer::throwBadFlag(float dt)
+{
+	float tossFlagHere[3] = { 0, -60, 0 };
+	TeamColor myteam = getTeam();
+	if (!AStarNode::isAccessible(0, -60))
+	{
+		if (AStarNode::isAccessible(0, 60))
+		{
+			tossFlagHere[0] = 0;
+			tossFlagHere[1] = 60;
+		}
+		else
+		{
+			tossFlagHere[0] = 0;
+			tossFlagHere[1] = 0;
+		}
+	}
+
+	serverLink->sendDropFlag(getId(), tossFlagHere);
+
+}
+
+/*
+* Drop the flag that the robot tank is carrying
+*/
+void			RobotPlayer::dropFlag(float dt)
+{
+	//serverLink->sendDropFlag(getId(), getPosition());
+	TeamColor myTeam = getTeam();
+	FlagType* thisFlag = getFlag();
+	float goalPos[3];
+	float tossFlagHere[3];
+
+	if (thisFlag->flagTeam != myTeam)
+	{
+		path.clear();
+		paths.clear();
+		target = NULL;
+		pathIndex = -1;
+
+		findHomeBase(myTeam, goalPos);
+		AStarNode goalNode(goalPos);
+		if (!teamPaths.empty() && goalNode == teamPathGoalNode)
+			return; // same goal so no need to plan again
+
+		aStarSearch(getPosition(), goalPos, teamPaths);
+		if (!teamPaths.empty()) {
+			teamPathGoalNode.setX(teamPaths[0][0].getX());
+			teamPathGoalNode.setY(teamPaths[0][0].getY());
+			teamPathIndex = teamPaths[0].size() - 2; // last index is start node
+		}
+	}
+
+	findHomeBase(myTeam, tossFlagHere);
+	if (tossFlagHere[0] < 0)
+	{
+		tossFlagHere[0] += 35;
+	}
+	if (tossFlagHere[0] > 0)
+	{
+		tossFlagHere[0] -= 35;
+	}
+	if (tossFlagHere[1] < 0)
+	{
+		tossFlagHere[1] += 35;
+	}
+	if (tossFlagHere[1] > 0)
+	{
+		tossFlagHere[1] -= 35;
+	}
+
+	serverLink->sendDropFlag(getId(), tossFlagHere);
+
+
+#ifdef TRACE5
+	char buffer[128];
+	sprintf(buffer, "R%d-%d following A* path", getTeam(), getId());
+	controlPanel->addMessage(buffer);
+#endif
+}
+
+bool			RobotPlayer::nearHome(float dt)
+{
+
+	TeamColor myteam = getTeam();
+	float goalPos[3];
+	const float *currentPos = getPosition();
+	findHomeBase(myteam, goalPos);
+
+	if (abs(goalPos[0] - currentPos[0]) > 20 || abs(goalPos[1] - currentPos[1]) > 20)
+	{
+		return false;
+	}
+
+	return false;
+}
+
+void			RobotPlayer::throwFlag(float dt)
+{
+	TeamColor myTeam = getTeam();
+	//serverLink->sendDropFlag(getId(), getPosition());
+	float tossFlagHere[3];
+	//get all other robot team
+	//
+
+	findHomeBase(myTeam, tossFlagHere);
+	if (tossFlagHere[0] < 0)
+	{
+		tossFlagHere[0] += 35;
+	}
+	if (tossFlagHere[0] > 0)
+	{
+		tossFlagHere[0] -= 35;
+	}
+	if (tossFlagHere[1] < 0)
+	{
+		tossFlagHere[1] += 35;
+	}
+	if (tossFlagHere[1] > 0)
+	{
+		tossFlagHere[1] -= 35;
+	}
+
+	serverLink->sendDropFlag(getId(), tossFlagHere);
+#ifdef TRACE5
+	char buffer[128];
+	sprintf(buffer, "R%d-%d following A* path", getTeam(), getId());
+	controlPanel->addMessage(buffer);
+#endif
 }
 
 // Local Variables: ***
