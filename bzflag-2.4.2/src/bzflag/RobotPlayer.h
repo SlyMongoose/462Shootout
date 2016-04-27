@@ -52,6 +52,8 @@ class RobotPlayer : public LocalPlayer {
 	void		RobotPlayer::doNothing(float dt);
 	void		RobotPlayer::evade(float dt);
 	void		RobotPlayer::followPath(float dt);
+	bool        RobotPlayer::isTherePowerUp(Flag &powFlag);
+	void		RobotPlayer::goToPowerUp(float location[3], Flag &flag);
 
 	bool		RobotPlayer::isFiringStatusReady(float dt);
 	bool		RobotPlayer::hasShotTimerElapsed(float dt);

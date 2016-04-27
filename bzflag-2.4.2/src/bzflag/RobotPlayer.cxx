@@ -624,8 +624,11 @@ void			RobotPlayer::setTarget(const Player* _target)
 
   TeamColor myteam = getTeam();
   float goalPos[3];
+  Flag flag;
   if (myTeamHoldingOpponentFlag())
 	  findHomeBase(myteam, goalPos);
+  if (isTherePowerUp(flag))
+	  goToPowerUp(goalPos, flag);
   else
 	  findOpponentFlag(goalPos);
 
@@ -1135,6 +1138,47 @@ void		RobotPlayer::aStarSearch(const float startPos[3], const float goalPos[3],
 		  controlPanel->addMessage(buffer);
 	  }
 	  controlPanel->addMessage(" ]\n\n");
+#endif
+}
+
+bool        RobotPlayer::isTherePowerUp(Flag &powFlag)
+{
+	if (!World::getWorld()->allowTeamFlags()) return;
+	for (int i = 0; i < numFlags; i++) {
+		Flag& flag = World::getWorld()->getFlag(i);
+		TeamColor flagTeamColor = flag.type->flagTeam;
+		if (flagTeamColor == NoTeam)
+        {
+			int radius = 100;
+			const float* position = getPosition();
+			const float angle = RobotPlayer::getAngle();
+			float center[2];
+			center[0] = position[0] + BZDBCache::tankRadius * cos(angle);
+			center[1] = position[1] + BZDBCache::tankRadius * sin(angle);
+
+			if (pow((flag.position[0] - center[0]), 2) + pow((flag.position[1] - center[1]), 2) < radius ^ 2)
+			{
+				powFlag = flag;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+}
+
+void		RobotPlayer::goToPowerUp(float location[3], Flag &flag)
+{
+	location[0] = flag.position[0];
+	location[1] = flag.position[1];
+	location[2] = flag.position[2];
+#ifdef TRACE2
+	char buffer[128];
+	sprintf(buffer, "Robot(%d) found a power-up at (%f, %f, %f)",
+		getId(), location[0], location[1], location[2]);
+	controlPanel->addMessage(buffer);
 #endif
 }
 
